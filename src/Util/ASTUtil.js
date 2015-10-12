@@ -1,4 +1,4 @@
-import estraverse from 'estraverse';
+import estraverse from 'estraverse-fb';
 
 let ESTRAVERSE_KEYS = {
   Super: [],
@@ -31,9 +31,7 @@ export default class ASTUtil {
     estraverse.traverse(ast, {
       enter: function(node, parent) {
         callback.call(this, node, parent);
-      },
-
-      keys: ESTRAVERSE_KEYS
+      }
     });
   }
 
@@ -58,9 +56,7 @@ export default class ASTUtil {
             this.break();
           }
         }
-      },
-
-      keys: ESTRAVERSE_KEYS
+      }
     });
 
     return path;

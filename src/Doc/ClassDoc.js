@@ -3,6 +3,8 @@ import AbstractDoc from './AbstractDoc.js';
 import ParamParser from '../Parser/ParamParser.js';
 import NamingUtil from '../Util/NamingUtil.js';
 
+import ASTUtil from '../Util/ASTUtil.js';
+
 /**
  * Doc Class from Class Declaration AST node.
  */
@@ -17,6 +19,78 @@ export default class ClassDoc extends AbstractDoc {
     this['@interface']();
     this['@extends']();
     this['@implements']();
+    this['@reactPropTypes']();
+  }
+
+  findReactPropTypesNode() {
+    let ptNode = null;
+    ASTUtil.traverse(this._node, function(node) {
+      if (node.type !== 'ClassProperty' || node.key.name !== 'propTypes') return;
+      ptNode = node;
+    });
+    return ptNode;
+  }
+
+  findReactPropIsRequired(ptNode) {
+    let isRequired = false;
+    ASTUtil.traverse(ptNode, function(n) {
+      if (n.value && n.value.property && n.value.property.name === 'isRequired') {
+        isRequired = true;
+      }
+    });
+
+    return isRequired;
+  }
+
+  findReactPropType(ptNode) {
+    const nodeVal = ptNode.value;
+    if (nodeVal.property && nodeVal.property.name !== 'isRequired') {
+      return nodeVal.property.name;
+    }
+    if (nodeVal.object && nodeVal.object.property) {
+      return nodeVal.object.property.name;
+    }
+    if (nodeVal.arguments && nodeVal.arguments.length > 0) {
+      const isArray = ptNode.value.callee.property.name === 'arrayOf';
+      const firstArg = nodeVal.arguments[0]
+      if (firstArg.properties) {
+        const strProps = firstArg.properties.map((p) => p.key.name);
+        if (isArray) {
+          return `array of [${strProps.join(', ')}]`;
+        }
+        else {
+          return `object {${strProps.join(', ')}}`;
+        }
+      }
+      if (firstArg.property) {
+        const propName = firstArg.property.name;
+        if (isArray) {
+          return `array of [${propName}]`;
+        }
+        else {
+          return `object {${propName}}`;
+        }
+      }
+
+    }
+  }
+
+  parsePropType(node) {
+    let result = { name: node.key.name };
+    result.isRequired = this.findReactPropIsRequired(node);
+    result.type = this.findReactPropType(node) || 'unknown';
+    return result;
+  }
+
+  parseReactPropTypes() {
+    const propTypeNode = this.findReactPropTypesNode();
+    if (!propTypeNode) return [];
+
+    return propTypeNode.value.properties.map(this.parsePropType.bind(this));
+  }
+
+  ['@reactPropTypes']() {
+    this._value.reactPropTypes = this.parseReactPropTypes();
   }
 
   /** specify ``class`` to kind. */
@@ -107,6 +181,7 @@ export default class ClassDoc extends AbstractDoc {
       if (longnames.length) this._value.extends = longnames;
     }
   }
+
 
   /** for @implements */
   ['@implements'](){

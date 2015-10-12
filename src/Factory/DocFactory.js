@@ -434,6 +434,8 @@ export default class DocFactory {
     return {type: null, node: null};
   }
 
+
+
   /**
    * decide Doc type from class declaration node.
    * @param {ASTNode} node - target node that is class declaration node.

@@ -370,10 +370,20 @@ table.params thead {
   color: #aaa;
 }
 
-table.params td {
-  padding: 4px;
+table.params td,
+table.params th {
+  padding: 8px;
   border: solid 1px #ddd;
 }
+
+.react-prop-types .name {
+  font-weight: bold;
+}
+.react-prop-types .type,
+.react-prop-types .required {
+  text-align: center;
+}
+
 
 table.params td p {
   margin: 0;

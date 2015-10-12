@@ -1,4 +1,10 @@
 import path from 'path';
+import _ from 'core-js';
+import estraverse from 'estraverse-fb';
+import * as babylon from 'babylon';
+
+
+
 
 /**
  * Plugin system for your plugin.

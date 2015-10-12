@@ -2,6 +2,17 @@ import IceCap from 'ice-cap';
 import DocBuilder from './DocBuilder.js';
 import {parseExample} from './util.js';
 
+function getReactPropTypesExample(className, props) {
+  let result = `<${className}`;
+  result += props.reduce((acc, val) => {
+    const required = val.isRequired ? '!required' : '';
+    return acc + `\n\t${val.name}={ ${val.type}${required} }`;
+  }, '');
+  result += '\n>';
+  result += `\n</${className}>`;
+  return result;
+}
+
 /**
  * Class Output Builder class.
  */
@@ -13,6 +24,7 @@ export default class ClassDocBuilder extends DocBuilder {
   exec(callback) {
     let ice = this._buildLayoutDoc();
     ice.autoDrop = false;
+
     let docs = this._find({kind: ['class']});
     for (let doc of docs) {
       let fileName = this._getOutputFileName(doc);
@@ -24,6 +36,8 @@ export default class ClassDocBuilder extends DocBuilder {
       callback(ice.html, fileName);
     }
   }
+
+
 
   /**
    * build class output.
@@ -42,7 +56,6 @@ export default class ClassDocBuilder extends DocBuilder {
     });
 
     let ice = new IceCap(this._readTemplate('class.html'));
-
     // header
     if (doc.export && doc.importPath && doc.importStyle) {
       let link = this._buildFileDocLinkHTML(doc, doc.importPath);
@@ -93,6 +106,16 @@ export default class ClassDocBuilder extends DocBuilder {
       ice.loop('test', tests, (i, test, ice)=>{
         let testDoc = this._find({longname: test})[0];
         ice.load('test', this._buildFileDocLinkHTML(testDoc, testDoc.testFullDescription));
+      });
+    });
+    ice.into('reactPropTypes', doc.reactPropTypes, (reactPropTypes, ice)=>{
+      const exampleFragment = getReactPropTypesExample(doc.name, reactPropTypes);
+      ice.text('reactExampleCode', exampleFragment);
+      ice.loop('reactPropType', reactPropTypes, (i, reactPropType, ice)=>{
+
+        ice.text('propName', reactPropType.name);
+        ice.text('type', reactPropType.type);
+        ice.text('isRequired', reactPropType.isRequired.toString());
       });
     });
 
